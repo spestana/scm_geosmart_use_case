@@ -81,7 +81,8 @@ def run_sca_prediction(dir_raster, dir_out, nodata_flag, model):
 
         with rasterio.open(f, 'r') as ds:
             arr = ds.read()  # read all raster values
-            arr = arr[:4,:,:]
+            if arr.shape[0] > 4: # if we have more than 4 bands
+                arr = arr[:4,:,:] # use only the first four
 
         print("Image dimension:".format(), arr.shape)  # 
         X_img = pd.DataFrame(arr.reshape([4,-1]).T)
