@@ -81,20 +81,24 @@ def run_sca_prediction(dir_raster, dir_out, nodata_flag, model):
 
         with rasterio.open(f, 'r') as ds:
             arr = ds.read()  # read all raster values
+            arr = arr[:4,:,:]
 
         print("Image dimension:".format(), arr.shape)  # 
         X_img = pd.DataFrame(arr.reshape([4,-1]).T)
         X_img.columns = ['blue','green','red','nir']
-        X_img['nodata_flag'] = np.where(X_img['blue']==0, -1, 1)
         
         X_img = X_img/10000 # scale surface reflectance to 0-1
+        
+        X_img['nodata_flag'] = np.where(X_img['blue']==0, -1, 1) # wherever blue band is zero, set to nodata value of -1
+        
+        
         # run model prediction
         y_img = model.predict(X_img.iloc[:,0:4])
         
         out_img = pd.DataFrame()
         out_img['label'] = y_img
         out_img['nodata_flag'] = X_img['nodata_flag']
-        out_img['label'] = np.where(out_img['nodata_flag'] == -1, nodata_flag, out_img['label'])
+        out_img['label'] = np.where(out_img['nodata_flag'] == -1, nodata_flag, out_img['label']) # where we set to -1, set to new nodata_flag value
         # Reshape our classification map
         img_prediction = out_img['label'].to_numpy().reshape(arr[0,:, :].shape)
 
@@ -109,8 +113,9 @@ def run_sca_prediction(dir_raster, dir_out, nodata_flag, model):
                         count = 1,
                         crs = ds.crs,
                         width = ds.width,
-                        height = ds.height) as dst:
-                    dst.write(img_prediction, indexes = 1)
+                        height = ds.height,
+                        nodata = nodata_flag) as dst:
+                    dst.write(img_prediction, indexes = 1, masked=True)
                 
                 
 # model evaluation CA
