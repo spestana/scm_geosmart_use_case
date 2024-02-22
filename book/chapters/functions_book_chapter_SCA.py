@@ -104,7 +104,7 @@ def run_sca_prediction(dir_raster, dir_out, nodata_flag, model):
         img_prediction = out_img['label'].to_numpy().reshape(arr[0,:, :].shape)
 
         
-        file_out = dir_out + os.path.basename(f)[0:-4] + '_SCA.tif'
+        file_out = dir_out + os.path.splitext(os.path.basename(f))[0] + '_SCA.tif'
         print("Save SCA map to: ".format(),file_out)
         with rasterio.open(
                         file_out, "w",
